@@ -6,36 +6,56 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class ReportService {
-    private final LocalDateTime DATE_TIME = LocalDateTime.now();
+    public Map<Integer, List<String>> getAvailablePeriods1(LocalDateTime calcDate) {
+        Map<Integer, List<String>> result = new HashMap<>();
 
-    
-    public Map<Integer, String[]> getAvailablePeriods() {
-        Map<Integer, String[]> result = new HashMap<>();
+        if (isEqualToDecember31(calcDate)) {
+            calcDate = calcDate.plusYears(1);
+        }
 
-        result.put((DATE_TIME.getYear()) - 1, getDateArray((DATE_TIME.getYear()) - 1));
-        result.put((DATE_TIME.getYear()) - 2, getDateArray((DATE_TIME.getYear()) - 2));
-        result.put((DATE_TIME.getYear()) - 3, getDateArray((DATE_TIME.getYear()) - 3));
+        for (int i = 1; i <= 3; i++) {
+            int yearNo = calcDate.getYear() - i;
+            result.put(yearNo, getDateArray(yearNo, calcDate));
+        }
+
         return result;
     }
-    
-    public static String[] getDateArray(Integer dateTime) {
-        String[] dates = new String[13];
-        LocalDate currentYear = LocalDate.of(dateTime,Month.DECEMBER,31);
+
+    private List<String> getDateArray(Integer dateTime, LocalDateTime localDateTime) {
+        if (isEqualToDecember31(localDateTime)){
+            localDateTime = localDateTime.minusYears(1);
+        }
+        List<String> dates = new ArrayList<>();
+        LocalDate currentYear = LocalDate.of(dateTime, Month.DECEMBER, 31);
         LocalDate date = currentYear;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
 
         for (int i = 0; i < 13; i++) {
-            dates[i] = date.format(formatter);
+            if (date.isAfter(localDateTime.toLocalDate())) {
+                break;
+            }
+            dates.add(date.format(formatter));
             date = date.plusMonths(1).withDayOfMonth(1);
+
         }
-        dates[0] = currentYear.format(formatter);
+        dates.set(0, currentYear.format(formatter));
 
 
         return dates;
+    }
+
+
+    private boolean isEqualToDecember31(LocalDateTime date) {
+        int day = date.getDayOfMonth();
+        int month = date.getMonthValue();
+
+        return day == 31 && month == 12;
     }
 }
