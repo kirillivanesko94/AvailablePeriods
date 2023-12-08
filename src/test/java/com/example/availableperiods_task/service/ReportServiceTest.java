@@ -1,10 +1,10 @@
-package com.example.availableperiods_task;
+package com.example.availableperiods_task.service;
 
-import com.example.availableperiods_task.service.ReportService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -17,13 +17,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ReportServiceTest {
     private final ReportService reportService = new ReportService();
-
     static Map<Integer, List<String>> EXPECTED_1 = new HashMap<>();
     static Map<Integer, List<String>> EXPECTED_2 = new HashMap<>();
     static Map<Integer, List<String>> EXPECTED_3 = new HashMap<>();
 
-    @BeforeEach
-    public void setUp() {
+
+    static {
         EXPECTED_1.put(2019, List.of("31 декабря 2019", "01 января 2020", "01 февраля 2020", "01 марта 2020",
                 "01 апреля 2020", "01 мая 2020", "01 июня 2020", "01 июля 2020", "01 августа 2020", "01 сентября 2020",
                 "01 октября 2020", "01 ноября 2020", "01 декабря 2020"));
@@ -53,20 +52,23 @@ public class ReportServiceTest {
         EXPECTED_3.put(2023, List.of("31 декабря 2023"));
     }
 
-    public static Stream<Arguments> getDates() {
+
+    @ParameterizedTest()
+    @MethodSource("getDates")
+    void getAvailablePeriodTest(LocalDateTime date, Map<Integer, List<String>> expected) {
+        try (MockedStatic<LocalDateTime> mockedStatic = Mockito.mockStatic(LocalDateTime.class)) {
+            mockedStatic.when(LocalDateTime::now).thenReturn(date);
+            Map<Integer, List<String>> actual = reportService.getAvailablePeriodsFromCurrentDate();
+
+            assertEquals(expected, actual);
+        }
+    }
+
+    private static Stream<Arguments> getDates() {
         return Stream.of(
                 Arguments.of(LocalDateTime.of(2022, 1, 1, 0, 0), EXPECTED_1),
                 Arguments.of(LocalDateTime.of(2023, 10, 27, 0, 0), EXPECTED_2),
                 Arguments.of(LocalDateTime.of(2023, 12, 31, 0, 0), EXPECTED_3)
         );
-    }
-
-
-    @ParameterizedTest()
-    @MethodSource("getDates")
-    void getAvailablePeriodTest(LocalDateTime dates, Map<Integer, List<String>> expected) {
-        Map<Integer, List<String>> actual = reportService.getAvailablePeriods1(dates);
-
-        assertEquals(expected, actual);
     }
 }
